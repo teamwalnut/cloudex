@@ -50,7 +50,7 @@ defmodule Cloudex.Mixfile do
   defp deps do
     [
       {:credo, "> 0.0.0", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0.0-rc.3", only: [:dev], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:earmark, "> 0.0.0", only: :dev},
       {:ex_doc, "> 0.0.0", only: :dev},
       {:excoveralls, "> 0.0.0", only: :test},
