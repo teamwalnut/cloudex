@@ -118,7 +118,10 @@ defmodule Cloudex.CloudinaryApi do
       hackney: [
         basic_auth: {Cloudex.Settings.get(:api_key), Cloudex.Settings.get(:secret)},
         timeout: 60_000,
-        recv_timeout: 60_000
+        recv_timeout: 60_000,
+        # hackney 4.x auto-negotiates HTTP/2 via ALPN; its h2 stack mishandles large
+        # multipart bodies over pooled connections, dropping the file part (CORE-3860).
+        protocols: [:http1]
       ]
     ]
   end
