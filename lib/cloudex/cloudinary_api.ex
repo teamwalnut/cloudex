@@ -118,7 +118,13 @@ defmodule Cloudex.CloudinaryApi do
       hackney: [
         basic_auth: {Cloudex.Settings.get(:api_key), Cloudex.Settings.get(:secret)},
         timeout: 60_000,
-        recv_timeout: 60_000
+        recv_timeout: 60_000,
+        # Force HTTP/1.1: hackney 4.x auto-negotiates HTTP/2 via ALPN, and its h2
+        # stack mishandles large request bodies over pooled connections — the
+        # multipart file upload arrives with no `file` part, so Cloudinary rejects
+        # it with "Missing required parameter - file". Mirrors the ExAws HTTP/1.1
+        # workaround (walnut IE-129 / CORE-3775).
+        protocols: [:http1]
       ]
     ]
   end
