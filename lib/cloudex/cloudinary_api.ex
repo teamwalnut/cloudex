@@ -124,7 +124,15 @@ defmodule Cloudex.CloudinaryApi do
         # multipart file upload arrives with no `file` part, so Cloudinary rejects
         # it with "Missing required parameter - file". Mirrors the ExAws HTTP/1.1
         # workaround (walnut IE-129 / CORE-3775).
-        protocols: [:http1]
+        protocols: [:http1],
+        # Dedicated pool, isolated from the app-wide `:default` hackney pool
+        # every other outgoing HTTP call shares. CORE-3860's http1 override
+        # still left one intermittent "Missing required parameter - file"
+        # failure days after deploy; giving Cloudinary uploads their own pool
+        # rules out any interaction with unrelated traffic on the shared pool
+        # (load_regulation slot contention, TCP connections churned by other
+        # hosts, etc.) as a contributing factor.
+        pool: :cloudinary_uploads
       ]
     ]
   end
