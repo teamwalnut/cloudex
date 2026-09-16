@@ -1,0 +1,31 @@
+[
+  {
+    "request": {
+      "body": "file=https://example.com/oversized.jpg",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+      },
+      "method": "post",
+      "options": {
+        "basic_auth": [
+          "my_key",
+          "my_secret"
+        ]
+      },
+      "request_body": "",
+      "url": "https://api.cloudinary.com/v1_1/my_cloud_name/image/upload"
+    },
+    "response": {
+      "binary": false,
+      "body": "<html>\r\n<head><title>413 Request Entity Too Large</title></head>\r\n<body>\r\n<center><h1>413 Request Entity Too Large</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n",
+      "headers": {
+        "Content-Type": "text/html",
+        "Server": "nginx",
+        "Connection": "close"
+      },
+      "status_code": 413,
+      "type": "ok"
+    }
+  }
+]

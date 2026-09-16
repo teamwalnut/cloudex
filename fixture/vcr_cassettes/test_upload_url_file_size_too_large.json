@@ -1,0 +1,30 @@
+[
+  {
+    "request": {
+      "body": "file=https://example.com/oversized.jpg",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+      },
+      "method": "post",
+      "options": {
+        "basic_auth": [
+          "my_key",
+          "my_secret"
+        ]
+      },
+      "request_body": "",
+      "url": "https://api.cloudinary.com/v1_1/my_cloud_name/image/upload"
+    },
+    "response": {
+      "binary": false,
+      "body": "{\"error\":{\"message\":\"File size too large. Got 87939107. Maximum is 41943040.\"}}",
+      "headers": {
+        "Content-Type": "application/json; charset=utf-8",
+        "Server": "cloudinary"
+      },
+      "status_code": 400,
+      "type": "ok"
+    }
+  }
+]
