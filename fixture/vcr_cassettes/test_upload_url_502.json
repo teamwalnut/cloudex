@@ -1,0 +1,31 @@
+[
+  {
+    "request": {
+      "body": "file=https://example.com/whatever.jpg",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+      },
+      "method": "post",
+      "options": {
+        "basic_auth": [
+          "my_key",
+          "my_secret"
+        ]
+      },
+      "request_body": "",
+      "url": "https://api.cloudinary.com/v1_1/my_cloud_name/image/upload"
+    },
+    "response": {
+      "binary": false,
+      "body": "<html><body>Bad Gateway</body></html>",
+      "headers": {
+        "Content-Type": "text/html",
+        "Server": "nginx",
+        "Connection": "close"
+      },
+      "status_code": 502,
+      "type": "ok"
+    }
+  }
+]

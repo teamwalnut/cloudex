@@ -60,6 +60,27 @@ defmodule CloudexTest do
     end
   end
 
+  test "upload url rejected with a 413 (nginx HTML body, not JSON)" do
+    use_cassette "test_upload_url 413" do
+      assert {:error, :source_too_large} =
+               Cloudex.upload("https://example.com/oversized.jpg")
+    end
+  end
+
+  test "upload url rejected by Cloudinary's own max-file-size JSON error (not a 413)" do
+    use_cassette "test_upload_url file_size_too_large" do
+      assert {:error, :source_too_large} =
+               Cloudex.upload("https://example.com/oversized.jpg")
+    end
+  end
+
+  test "upload url surfaces a non-JSON, non-413 error response as a descriptive term instead of raising" do
+    use_cassette "test_upload_url 502" do
+      assert {:error, {:cloudinary_http_error, 502, "<html><body>Bad Gateway</body></html>"}} =
+               Cloudex.upload("https://example.com/whatever.jpg")
+    end
+  end
+
   test "mixed files / urls" do
     use_cassette "test_upload_mixed" do
       assert [

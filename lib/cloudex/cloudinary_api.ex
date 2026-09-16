@@ -17,7 +17,9 @@ defmodule Cloudex.CloudinaryApi do
     %{resource_type: "video"}
   which will cause a video upload to occur.
   returns {:ok, %UploadedFile{}} containing all the information from cloudinary
-  or {:error, "reason"}
+  or {:error, "reason"} — a source Cloudinary rejects as too large (a `413`, or its own
+  max-file-size validation) returns {:error, :source_too_large} specifically, so a caller
+  can retry with a smaller source rather than treat it like any other failure.
   """
   @spec upload(String.t() | {:ok, String.t()}, map) ::
           {:ok, Cloudex.UploadedImage.t()} | {:error, any}
@@ -167,9 +169,9 @@ defmodule Cloudex.CloudinaryApi do
 
   @spec post(tuple | String.t(), binary, map) :: {:ok, %Cloudex.UploadedImage{}} | {:error, any}
   defp post(body, source, opts) do
-    with {:ok, raw_response} <- common_post(body, opts),
-         {:ok, response} <- @json_library.decode(raw_response.body),
-         do: handle_response(response, source)
+    with {:ok, raw_response} <- common_post(body, opts) do
+      handle_response(raw_response.status_code, raw_response.body, source)
+    end
   end
 
   defp common_post(body, opts) do
@@ -199,20 +201,36 @@ defmodule Cloudex.CloudinaryApi do
     "#{@base_url}#{Cloudex.Settings.get(:cloud_name)}/#{resource_type}/upload"
   end
 
-  @spec handle_response(map, String.t()) :: {:error, any} | {:ok, %Cloudex.UploadedImage{}}
-  defp handle_response(
-         %{
-           "error" => %{
-             "message" => error
-           }
-         },
-         _source
-       ) do
-    {:error, error}
-  end
+  # Cloudinary rejects an oversized upload two different ways: a `413 Request Entity Too
+  # Large` from nginx, whose body is an HTML error page rather than JSON (so blindly
+  # decoding it, the previous behaviour here, raised instead of returning a clean error);
+  # and, separately, its own account-level max-file-size validation, returned as ordinary
+  # JSON with a message starting "File size too large." — both permanent-as-is,
+  # non-retryable rejections, so both are classified the same way rather than left for a
+  # caller to puzzle out from a decode exception or an opaque message string. Mirrors
+  # walnut_monorepo's `Api.Storylines.CapturedScreenAssets.CloudinaryUploader` (CORE-6291),
+  # which special-cases the same two shapes for its own (non-Cloudex) upload path.
+  @spec handle_response(non_neg_integer, binary, String.t()) ::
+          {:error, any} | {:ok, %Cloudex.UploadedImage{}}
+  defp handle_response(413, _raw, _source), do: {:error, :source_too_large}
 
-  defp handle_response(response, source) do
-    {:ok, json_result_to_struct(response, source)}
+  defp handle_response(status_code, raw, source) do
+    case @json_library.decode(raw) do
+      {:ok, %{"error" => %{"message" => "File size too large" <> _}}} ->
+        {:error, :source_too_large}
+
+      {:ok, %{"error" => %{"message" => error}}} ->
+        {:error, error}
+
+      {:ok, response} when status_code in 200..299 ->
+        {:ok, json_result_to_struct(response, source)}
+
+      {:ok, response} ->
+        {:error, {:cloudinary_http_error, status_code, response}}
+
+      {:error, _decode_error} ->
+        {:error, {:cloudinary_http_error, status_code, raw}}
+    end
   end
 
   #  Unifies hybrid map into string-only key map.
